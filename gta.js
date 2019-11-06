@@ -1,7 +1,69 @@
 // Get some document things
 var carSaleTimer = "";
 
+//
 // Some globals that the clockTick function can reference (to know what to do)
+// 
+
+// Let's use classes to be a little fancy
+class gtaTimer
+{
+    // timerValue = the starting value of the timer. Usually 0 (timers count up)
+    // timerMax   = the maximum number of seconds before the timer expires
+    constructor(timerName, timerValue, timerMax, timerState = false)
+    {
+        this.timerName = timerName;
+        this.timerValue = timerValue;
+        this.timerMax = timerMax;
+
+        const timerValueOrig = this.timerValue;
+    }
+
+    tick()
+    {
+        if (this.timerState)
+        {
+            this.timerValue += 1;
+        }
+    }
+
+    reset()
+    {
+        this.timerValue = timerValueOrig;
+    }
+
+    pause()
+    {
+        this.timerState = false;
+    }
+
+    remaining()
+    {
+        return this.timerMax - this.timerValue;
+    }
+
+    // Makes a nice time value (mm:ss) out of seconds
+    static secondsToTimeValue(seconds)
+    {
+        var minutes = Math.floor(seconds / 60);
+        seconds = seconds % 60;
+
+        if(minutes < 10){minutes = "0"+minutes;}
+        if(seconds < 10){seconds = "0"+seconds;}
+
+        return minutes + ":" + seconds;
+    }
+}
+
+var p = new gtaTimer("carSale",0,2880);
+console.log("Value of the classed gta timer: " + p.timerMax);
+p.tick();
+p.timerState = true;
+p.tick();
+
+console.log("Time remaining: " + p.remaining());
+console.log("200 seconds = " + gtaTimer.secondsToTimeValue(200));
+
 var carSaleActive = false;
 var carSaleSeconds = 0;
 
@@ -21,7 +83,7 @@ function clockTick()
     }
     
     // Set the timer strings
-    carSaleTimer.innerHTML = secondsToTimeValue(carSaleSeconds);
+    carSaleTimer.innerHTML = gtaTimer.secondsToTimeValue(carSaleSeconds);
 }
 
 // Start the car sale timer
@@ -38,17 +100,7 @@ function carSaleReset()
     carSaleSeconds = 0;
 }
 
-// Makes a nice time value (mm:ss) out of seconds
-function secondsToTimeValue(seconds)
-{
-    var minutes = Math.floor(seconds / 60);
-    seconds = seconds % 60;
 
-    if(minutes < 10){minutes = "0"+minutes;}
-    if(seconds < 10){seconds = "0"+seconds;}
-
-    return minutes + ":" + seconds;
-}
 
 // When the page is ready, hit GO!
 document.addEventListener("DOMContentLoaded", function(){
