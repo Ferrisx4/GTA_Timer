@@ -1,0 +1,3 @@
+machine name, human name, timer length, timer type
+carSale, Car Sale, 2880, after
+newLobby,Join a new lobby,2880, before
