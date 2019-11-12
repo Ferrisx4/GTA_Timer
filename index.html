@@ -10,9 +10,9 @@
         <h4>Car Sale (Once per day, 48 minutes)</h4>
         <div id="timers">
             <center>
-                <input type="button" value="Start" onclick="carSaleStart()" id="carSaleStartButton">
-                <input type="button" value="Reset" onclick="carSaleReset()" id="carSaleResetButton">
-                <input type="button" value="Pause" onclick="carSalePause()" id="carSalePauseButton">
+                <input type="button" value="Start" onclick="timer_api('carSale','start')" id="carSaleStartButton">
+                <input type="button" value="Reset" onclick="timer_api('carSale','reset')" id="carSaleResetButton">
+                <input type="button" value="Pause" onclick="timer_api('carSale','pause')" id="carSalePauseButton">
             <p id="carSaleTimer">00:00</p>
             </center>
         </div>
