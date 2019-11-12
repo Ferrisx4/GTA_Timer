@@ -8,38 +8,65 @@ var carSaleTimer = "";
 // Let's use classes to be a little fancy
 class gtaTimer
 {
-    // timerValue = the starting value of the timer. Usually 0 (timers count up)
-    // timerMax   = the maximum number of seconds before the timer expires
-    constructor(timerName, timerValue, timerMax, timerState = false)
+    // timerLength   = the maximum number of seconds before the timer expires
+    constructor(timerName, timerLength, timerState = false)
     {
         this.timerName = timerName;
-        this.timerValue = timerValue;
-        this.timerMax = timerMax;
-
-        const timerValueOrig = this.timerValue;
+        this.timerTarget = 0;
+        this.timerLength = timerLength;
+        this.timerPausedTime;
     }
 
-    tick()
+    tick(sse)
     {
-        if (this.timerState)
+        // Calculate new remaining tiem
+        var remainingSecs = this.remaining();
+        if (remainingSecs == 0)
         {
-            this.timerValue += 1;
+            console.log("Reached end of timer, pausing..");
+            this.pause();
         }
+        document.title=gtaTimer.secondsToTimeValue(remainingSecs);
     }
 
+    start()
+    {
+        // Set the timer to active state
+        this.timerState = true;
+
+        // get the starting time (SSE)
+        this.timerTarget = (gtaTimer.sSE() + this.timerLength);
+        
+    }
     reset()
     {
-        this.timerValue = timerValueOrig;
+        // get a new Date() and add the timerLength to it
+        this.timerTarget = (gtaTimer.sSE() + this.timerLength);
     }
 
     pause()
-    {
-        this.timerState = false;
+    {   
+        // Get the pause button of this timer so we can alter the text
+        var pause_button = document.getElementById(this.timerName + "PauseButton");
+        // Timer is running, pause it. 
+        if (this.timerState)
+        {
+            this.timerState = false;
+            this.timerPausedValue = this.remaining();
+            pause_button.value = "resume";
+        }
+        else // Timer is paused, resume it.
+        {
+            // Set new target
+            this.timerTarget = (gtaTimer.sSE() + this.timerPausedValue);
+            this.timerState = true;
+            pause_button.value = "pause";
+        }
     }
 
     remaining()
     {
-        return this.timerMax - this.timerValue;
+        return (this.timerTarget - gtaTimer.sSE());
     }
 
     // Makes a nice time value (mm:ss) out of seconds
@@ -53,56 +80,97 @@ class gtaTimer
 
         return minutes + ":" + seconds;
     }
+
+    // Return the number of seconds (not ms) from epoch
+    static sSE()
+    {
+        return Math.floor(new Date() / 1000);
+    }
 }
 
-var p = new gtaTimer("carSale",0,2880);
-console.log("Value of the classed gta timer: " + p.timerMax);
-p.tick();
-p.timerState = true;
-p.tick();
 
-console.log("Time remaining: " + p.remaining());
-console.log("200 seconds = " + gtaTimer.secondsToTimeValue(200));
+// Purely testing 
+function basic_tests()
+{
+    var p = new gtaTimer("carSale",0,2880);
+    console.log("Value of the classed gta timer: " + p.timerLength);
+    p.tick();
+    p.timerState = true;
+    p.tick();
+    
+    console.log("Time remaining: " + p.remaining());
+    console.log("200 seconds = " + gtaTimer.secondsToTimeValue(200));
+    
+    var carSaleActive = false;
+    var carSaleSeconds = 0;
+}
 
-var carSaleActive = false;
-var carSaleSeconds = 0;
+var gtaTimers = [];
 
-// The main clock. Starts on page ready
+// 2 The main clock. Starts on page ready
 function clockInit()
-{    
+{   
+    // Collect the timers somehow (from a file?) and add them to the gtaTimers array
+    // For now, hardcode
+
+    gtaTimers.push(new gtaTimer("carSale",2880));
+    gtaTimers.push(new gtaTimer("session",6));
+
+    // Start the clocks a tickin'!
     setInterval(clockTick,1000);
 }
 
-// The ticking of the clock (things that run every second)
+// 3 The ticking of the clock (things that run every second)
 function clockTick()
 {
     // Check the individual timers
-    if (carSaleActive)
+    for(i = 0;i<gtaTimers.length;i++)
     {
-        carSaleSeconds += 1;
+        if (gtaTimers[i].timerState)
+        {
+            // Set the timer string
+            gtaTimers[i].tick(gtaTimer.sSE());
+            carSaleTimer.innerHTML = gtaTimer.secondsToTimeValue(gtaTimers[i].remaining());
+        }
     }
-    
-    // Set the timer strings
-    carSaleTimer.innerHTML = gtaTimer.secondsToTimeValue(carSaleSeconds);
 }
 
-// Start the car sale timer
-function carSaleStart()
+// This function handles HTML button actions.
+// Returns null if index not found
+function timer_api(timerName,action)
 {
-    console.log("Initiating Car Sales timer");
-    carSaleActive = true;
+    var index;
+    // Find the index
+    for (i = 0;i<gtaTimers.length;i++)
+    {
+        if (gtaTimers[i].timerName == timerName)
+        {
+            if(action == 'start')
+            {
+                gtaTimers[i].start();
+                return;
+            }
+            else if(action == 'pause')
+            {
+                gtaTimers[i].pause();
+                return;
+            }
+            else if(action == 'reset')
+            {
+                gtaTimers[i].reset();
+                return;
+            }
+            else
+            {
+                console.log("Unknown action")
+            }
+        }
+    }
+    console.log("No timer with that name");
+    return null;    
 }
 
-// Reset the car sale timer
-function carSaleReset()
-{
-    console.log("Resetting Car Sales timer");
-    carSaleSeconds = 0;
-}
-
-
-
-// When the page is ready, hit GO!
+// 1 When the page is ready, hit GO!
 document.addEventListener("DOMContentLoaded", function(){
     // Handler when the DOM is fully loaded
     carSaleTimer = document.getElementById("carSaleTimer");
